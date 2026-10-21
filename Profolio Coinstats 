@@ -1,0 +1,377 @@
+> ## Documentation Index
+> Fetch the complete documentation index at: https://coinstats.app/api-docs/llms.txt
+> Use this file to discover all available pages before exploring further.
+
+# Get Portfolio Chart
+
+> Get historical portfolio performance data for visualizing value changes over time
+
+# Portfolio Performance Chart
+
+Get historical data to visualize your portfolio's performance over various time periods. This endpoint provides time-series data showing how your portfolio value has changed, perfect for creating charts and analyzing trends.
+
+## Key Features
+
+* **Multiple Time Ranges**: View data from 24 hours to all-time history
+* **Time-Series Data**: Arrays of timestamps and corresponding values
+* **Performance Tracking**: Track portfolio growth and declines over time
+* **Historical Profit/Loss**: See how your PnL has evolved
+* **Trend Analysis**: Identify patterns and market cycles in your portfolio
+
+> [!NOTE]
+>
+> Your API key gives access to all of your own portfolios — no share token needed. Pass a `portfolioId` from [GET /portfolio/list](/api-docs/api-docs/openapi/get-portfolio-list) to target one portfolio, or omit it to get aggregated data for all your portfolios. A [share token](/api-docs/api-docs/sharetoken) is only needed to read someone else's shared portfolio.
+
+## Get Portfolio Chart Data
+
+Retrieve historical portfolio performance data:
+
+```bash cURL theme={null}
+curl -H "X-API-KEY: your-api-key" \
+  "https://api.coinstats.app/v1/portfolio/chart?type=1w&portfolioId=YOUR_PORTFOLIO_ID"
+```
+
+```javascript JavaScript theme={null}
+const response = await fetch('https://api.coinstats.app/v1/portfolio/chart?type=1w&portfolioId=YOUR_PORTFOLIO_ID', {
+  headers: {
+    'X-API-KEY': 'your-api-key'
+  }
+});
+const chartData = await response.json();
+```
+
+```python Python theme={null}
+import requests
+
+response = requests.get(
+    'https://api.coinstats.app/v1/portfolio/chart',
+    params={
+        'type': '1w',
+        'portfolioId': 'YOUR_PORTFOLIO_ID'
+    },
+    headers={
+        'X-API-KEY': 'your-api-key'
+    }
+)
+chart_data = response.json()
+```
+
+> [!NOTE]
+>
+> **8 credits** per request
+
+## Headers
+
+| Header | Required | Description |
+| - | - | - |
+| `X-API-KEY` | Yes | Your CoinStats API key |
+| `sharetoken` | No | Share token of a shared portfolio ([learn more](/api-docs/api-docs/sharetoken)). Not needed for your own portfolios |
+| `passcode` | No | Passcode if the shared portfolio is protected |
+
+## Query Parameters
+
+| Parameter | Type | Required | Description |
+| - | - | - | - |
+| `type` | string | Yes | Time range for chart data |
+| `portfolioId` | string | No | One of your portfolios from [GET /portfolio/list](/api-docs/api-docs/openapi/get-portfolio-list). Omit to aggregate all your portfolios |
+
+### Time Range Options
+
+| Type | Description | Data Points |
+| - | - | - |
+| `24h` | Last 24 hours | Hourly data points |
+| `1w` | Last 7 days | 6-hour intervals |
+| `1m` | Last 30 days | Daily data points |
+| `3m` | Last 90 days | Daily data points |
+| `6m` | Last 180 days | Daily data points |
+| `1y` | Last 365 days | Daily data points |
+| `all` | All-time history | Variable intervals |
+
+### Shared Portfolio (Share Token)
+
+To read a portfolio someone shared with you, pass its share token instead of `portfolioId`. Add the `passcode` header if the shared portfolio is protected:
+
+```bash theme={null}
+curl -H "X-API-KEY: your-api-key" \
+     -H "sharetoken: SHARED_PORTFOLIO_TOKEN" \
+     -H "passcode: 123456" \
+     "https://api.coinstats.app/v1/portfolio/chart?type=1m"
+```
+
+## Example Response
+
+The response is an array of arrays, where each sub-array contains `[timestamp, value]`:
+
+```json theme={null}
+{
+  "result": [
+    [1701388800000, 125430.52],
+    [1701475200000, 128945.76],
+    [1701561600000, 126780.44],
+    [1701648000000, 130205.18],
+    [1701734400000, 132890.92],
+    [1701820800000, 131450.38],
+    [1701907200000, 134720.65]
+  ]
+}
+```
+
+### Data Format
+
+* **First element**: Unix timestamp in milliseconds
+* **Second element**: Portfolio value in USD at that timestamp
+
+## Visualization Examples
+
+### JavaScript Chart Example
+
+Using Chart.js to visualize portfolio performance:
+
+```javascript theme={null}
+const response = await fetch('https://api.coinstats.app/v1/portfolio/chart?type=1m', {
+  headers: {
+    'X-API-KEY': 'your-api-key'
+  }
+});
+const data = await response.json();
+
+// Transform data for Chart.js
+const chartData = {
+  labels: data.result.map(point => new Date(point[0]).toLocaleDateString()),
+  datasets: [{
+    label: 'Portfolio Value (USD)',
+    data: data.result.map(point => point[1]),
+    borderColor: 'rgb(75, 192, 192)',
+    tension: 0.1
+  }]
+};
+
+// Create chart
+new Chart(ctx, {
+  type: 'line',
+  data: chartData,
+  options: {
+    responsive: true,
+    plugins: {
+      title: {
+        display: true,
+        text: 'Portfolio Performance - Last 30 Days'
+      }
+    }
+  }
+});
+```
+
+### Python Visualization
+
+Using matplotlib to plot portfolio data:
+
+```python theme={null}
+import requests
+import matplotlib.pyplot as plt
+from datetime import datetime
+
+response = requests.get(
+    'https://api.coinstats.app/v1/portfolio/chart',
+    params={'type': '1m'},
+    headers={
+        'X-API-KEY': 'your-api-key'
+    }
+)
+data = response.json()
+
+# Extract timestamps and values
+timestamps = [datetime.fromtimestamp(point[0]/1000) for point in data['result']]
+values = [point[1] for point in data['result']]
+
+# Create plot
+plt.figure(figsize=(12, 6))
+plt.plot(timestamps, values, linewidth=2)
+plt.title('Portfolio Performance - Last 30 Days')
+plt.xlabel('Date')
+plt.ylabel('Value (USD)')
+plt.grid(True, alpha=0.3)
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+```
+
+## Use Cases
+
+> **Performance Dashboard**
+>
+> Build interactive dashboards showing portfolio growth over time
+
+> **Trend Analysis**
+>
+> Identify bull and bear market cycles in your portfolio
+
+> **Goal Tracking**
+>
+> Monitor progress toward investment goals with visual charts
+
+> **Historical Reports**
+>
+> Generate historical performance reports for any time period
+
+## Calculate Performance Metrics
+
+Use chart data to calculate custom metrics:
+
+```javascript theme={null}
+async function getPortfolioMetrics(portfolioId, period) {
+  const response = await fetch(
+    `https://api.coinstats.app/v1/portfolio/chart?type=${period}&portfolioId=${portfolioId}`,
+    {
+      headers: {
+        'X-API-KEY': 'your-api-key'
+      }
+    }
+  );
+  const data = await response.json();
+  
+  const values = data.result.map(p => p[1]);
+  const firstValue = values[0];
+  const lastValue = values[values.length - 1];
+  const maxValue = Math.max(...values);
+  const minValue = Math.min(...values);
+  
+  return {
+    currentValue: lastValue,
+    startValue: firstValue,
+    change: lastValue - firstValue,
+    changePercent: ((lastValue - firstValue) / firstValue * 100).toFixed(2),
+    highValue: maxValue,
+    lowValue: minValue,
+    volatility: ((maxValue - minValue) / minValue * 100).toFixed(2)
+  };
+}
+
+// Usage
+const metrics = await getPortfolioMetrics('YOUR_PORTFOLIO_ID', '1m');
+console.log(`30-Day Performance: ${metrics.changePercent}%`);
+console.log(`Volatility: ${metrics.volatility}%`);
+```
+
+## Comparing Time Periods
+
+Compare performance across different time ranges:
+
+```javascript theme={null}
+async function comparePerformance(portfolioId) {
+  const periods = ['24h', '1w', '1m', '1y'];
+  const results = {};
+  
+  for (const period of periods) {
+    const response = await fetch(
+      `https://api.coinstats.app/v1/portfolio/chart?type=${period}&portfolioId=${portfolioId}`,
+      {
+        headers: {
+          'X-API-KEY': 'your-api-key'
+        }
+      }
+    );
+    const data = await response.json();
+    const values = data.result.map(p => p[1]);
+    const change = ((values[values.length - 1] - values[0]) / values[0] * 100).toFixed(2);
+    results[period] = `${change}%`;
+  }
+  
+  return results;
+}
+
+// Output example:
+// { '24h': '+2.4%', '1w': '+5.8%', '1m': '+12.3%', '1y': '+45.6%' }
+```
+
+## Error Handling
+
+> **Invalid Type Parameter (400)**
+>
+> ```json theme={null}
+> {
+>   "error": "Invalid time range type"
+> }
+> ```
+>
+> **Solution**: Use one of the valid time range options (24h, 1w, 1m, 3m, 6m, 1y, all)
+
+> **Unauthorized (401)**
+>
+> ```json theme={null}
+> {
+>   "error": "Invalid API key"
+> }
+> ```
+>
+> **Solution**: Check that your API key is correct and active
+
+> **Portfolio Not Found (404)**
+>
+> ```json theme={null}
+> {
+>   "statusCode": 404,
+>   "message": "Portfolio not found or not accessible"
+> }
+> ```
+>
+> **Solution**: Use a `portfolioId` returned by [GET /portfolio/list](/api-docs/api-docs/openapi/get-portfolio-list). If you are reading a shared portfolio, verify the share token is correct
+
+> **Passcode Required (409)**
+>
+> ```json theme={null}
+> {
+>   "error": "Passcode required for this portfolio"
+> }
+> ```
+>
+> **Solution**: Include the correct passcode for the shared portfolio
+
+> [!WARNING]
+>
+> Chart data availability depends on your portfolio's history. New portfolios may have limited historical data for longer time ranges.
+
+## Best Practices
+
+> **Optimize API Calls**
+>
+> * Cache chart data and refresh periodically rather than on every page load
+> * Use appropriate time ranges for your use case (24h for real-time, 1m for recent trends)
+
+> **Handle Missing Data**
+>
+> * Check for empty arrays or null values in responses
+> * Implement fallbacks for portfolios with limited history
+
+> **Visualization Tips**
+>
+> * Use line charts for continuous data
+> * Add annotations for significant events (large deposits/withdrawals)
+> * Include percentage changes in chart titles for context
+
+## Related Endpoints
+
+> **[Portfolio Value](/api-docs/api-docs/openapi/get-portfolio-value)**
+>
+> Get current portfolio value and overall metrics
+
+> **[Portfolio Coins](/api-docs/api-docs/portfolio/portfolio-coins)**
+>
+> View detailed holdings and coin-level performance
+
+> **[Portfolio Transactions](/api-docs/api-docs/openapi/get-portfolio-transactions)**
+>
+> Access complete transaction history
+
+> **[Portfolio Snapshots](/api-docs/api-docs/openapi/get-portfolio-snapshot-items)**
+>
+> Get historical portfolio snapshot data
+
+## Support
+
+<ul><li>**Documentation**: This site contains comprehensive API documentation</li>
+<li>**Telegram Chat**: For quick help and to connect with other developers, join our [API Support Telegram group](https://t.me/+JPUMD1QAMTNmNGQy)</li>
+<li>**Email Support**: You can reach us directly at [**api.support@coinstats.app**](mailto:api.support@coinstats.app) for personalized assistance.</li></ul>
+
+
+This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.
